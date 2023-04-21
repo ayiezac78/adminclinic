@@ -33,13 +33,13 @@ const Header = () => {
         <Routes>
           <Route path='/' element={<Home/>}/>
           <Route path='/login' element={<Login user={user} setUser={setUser}/>}/>
+          <Route path='/dashboard' element={<Dashboard/>}/>
+          <Route path='/welcome' element={<Welcome user={user} setUser={setUser}/>}/>
           <Route path='/profile/*' element={
             <Protected>
               <Profile user={user} setUser={setUser}/>
             </Protected>
           }/>
-          <Route path='/dashboard' element={<Dashboard/>}/>
-          <Route path='/welcome' element={<Welcome/>}/>
         </Routes>
       </div>
     </BrowserRouter>

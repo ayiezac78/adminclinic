@@ -8,7 +8,7 @@ const Home = () => {
         <div className="max-w-md">
           <h1 className="text-2xl font-bold">Online Clinic Appointment & Clinic Management System</h1>
           <p className="py-6 text-success">
-            "We always value the care of our patients"
+            "We always value the health & care of our patients"
           </p>
         </div>
       </div>
