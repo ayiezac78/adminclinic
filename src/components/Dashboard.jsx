@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import axios from 'axios';
 import { ClockLoader } from 'react-spinners';
 import { BsArrowClockwise } from 'react-icons/bs';
@@ -8,6 +8,8 @@ const Dashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [status, setStatus] = useState("pending");
+  const [selectedAction, setSelectedAction] = useState("");
   const itemsPerPage = 10;
 
   const getPaginatedData = () => {
@@ -15,7 +17,9 @@ const Dashboard = () => {
       const fullName = `${appointment.first_name} ${appointment.last_name}`;
       return (
         appointment.appointment_id.toString().includes(searchQuery) ||
-        fullName.toLowerCase().includes(searchQuery.toLowerCase())
+        fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        appointment.status === status ||
+        appointment.status === selectedAction
       );
     });
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -23,36 +27,64 @@ const Dashboard = () => {
     return filteredAppointments.slice(startIndex, endIndex);
   };
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setIsLoading(true);
     axios.get('/appointments')
       .then(response => {
-        setAppointments(response.data);
+        const updatedAppointments = response.data.map(appointment => ({...appointment, status: "pending"}));
+        setAppointments(updatedAppointments);
         setIsLoading(false);
       })
       .catch(error => {
         console.log(error);
+        setIsLoading(false);
       });
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    axios.get('/appointments')
-      .then(response => {
-        setAppointments(response.data);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.log(error);
-      });
-  }, []);
+  }, [fetchData]);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
+
+  useEffect(()=>{
+    setStatus('pending');
+    setSelectedAction('');
+  }, [])
+
+  useEffect(() => {
+    axios.get('/appointments')
+      .then(response => {
+
+      setAppointments(updatedAppointments);
+      setIsLoading(false);
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  }, []);
+
+  const handleAction = (action, appointmentId) => {
+    setSelectedAction(action);
+    const updatedAppointments = appointments.map((appointment) => {
+        if (appointment.appointment_id === appointmentId) {
+            return { ...appointment, status: action };
+        }
+        return appointment;
+    });
+    setAppointments(updatedAppointments);
+
+    axios.post(`/appointments/update/${appointmentId}`, { appointment_status: action })
+        .then((response) => {
+            setAppointments(response.data)
+            setSelectedAction("");
+        })
+        .catch((error) => {
+            console.log(error);
+        });
+};
 
   return (
     <div className="overflow-x-auto px-5 py-2">
@@ -67,7 +99,7 @@ const Dashboard = () => {
           </button>
           <input
             type="text"
-            className="border border-gray-400 rounded-md py-2 px-3 mr-2 input-sm"
+            className="rounded-md py-2 px-3 mr-2 input-sm input input-bordered input-success"
             placeholder="Search by name or appointment number"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -99,6 +131,8 @@ const Dashboard = () => {
                 <th>Contact Number</th>
                 <th>Email Address</th>
                 <th>Medical Concern</th>
+                <th>Appointment Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +155,31 @@ const Dashboard = () => {
                     <td>{appointment.contact_number}</td>
                     <td>{appointment.email_address}</td>
                     <td>{appointment.medical_concern}</td>
+                    <td>{appointment.status}</td>
+                    <td>
+                      {appointment.status === "pending" && (
+                        <>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleAction("done")}
+                          >
+                            Done
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleAction("cancelled")}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn btn-warning btn-sm"
+                            onClick={() => handleAction("reschedule")}
+                          >
+                            Reschedule
+                          </button>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}

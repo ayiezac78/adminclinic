@@ -78,7 +78,6 @@ const handleShowPassword = () => {
             id="submitForm"
             className="max-w-sm mx-auto my-8 bg-gray-500 rounded-lg shadow-md p-6"
           >
-            {/* <h2 className="text-2xl font-medium mb-4">Login</h2> */}
             {err_message}
             <div className="mb-4">
               <label
